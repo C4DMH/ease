@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 
 Load required packages and scripts (no input needed)
 ```{r setup, include=FALSE}
-packages <- c( "tidyverse", "nlme", "lme4", "data.table","ggplot2")
+packages <- c( "tidyverse")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))
 }
@@ -44,13 +44,30 @@ subs<-list.files(path = paste0(workdir,"Data_Winter2017/"))
 extract_geo=function(sub){
   files<-list.files(path=paste0(workdir,"Data_Winter2017/",sub,"/"),pattern = "log.decrypted")
   output<-lapply(X = files,FUN = function(file){
-    geooutput<-read.csv(paste0(workdir,"Data_Winter2017/",sub,"/",file),
-                         header = FALSE,sep = " ",stringsAsFactors = FALSE)
-    geooutput})
+    if (length(read.csv(paste0(workdir,"Data_Winter2017/",sub,"/",file),
+                       header = FALSE,sep = " ",stringsAsFactors = FALSE))>6){
+                         geooutput<-read.csv(paste0(workdir,"Data_Winter2017/",sub,"/",file),
+                                             header = FALSE,
+                                             sep = " ",
+                                             col.names = paste0("V",seq_len(200)),
+                                             stringsAsFactors = FALSE,
+                                             fill = TRUE) %>%
+                           select(V1,V2,V4,V5,V7) %>%
+                           mutate(startdate=as.Date(substring(V1,3,last=nchar(V1))),
+                                  starttime=substring(V2,1,last=(nchar(V2)-1)),
+                                  enddate=as.Date(substring(V4,2,last=nchar(V4))),
+                                  endtime=substring(V5,1,last=8),
+                                  lat=substring(V5,first=12,last=nchar(V5)),
+                                  long=substring(V7,first=1,last=(nchar(V7)-1))) %>%
+                           select(-contains("V"))
+                         geooutput
+    }
+  })
   output.df<-data.table::rbindlist(output, fill=TRUE)
   cbind(sub,output.df)
 }
-
+extract_geo_out<-lapply(subs,extract_geo)
+extract_geo_out.df<-as.data.frame(do.call(rbind,extract_geo_out))
 ```
 
 Text data
