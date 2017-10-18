@@ -1,0 +1,73 @@
+---
+title: "EASE"
+author: "Kate Mills"
+date: "10/18/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+Load required packages and scripts (no input needed)
+```{r setup, include=FALSE}
+packages <- c( "tidyverse", "nlme", "lme4", "data.table","ggplot2")
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))
+}
+lapply(packages, library, character.only = TRUE)
+workdir=as.character(read.table((paste0(getwd(),"/org/workdir.txt")))[[1]])
+
+# Kate's custom theme
+theme_kate <- function () { 
+    theme_bw() +
+  theme_minimal(base_size = 14, base_family = "Avenir") +
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        legend.position="bottom")
+}
+```
+
+Geolocation data
+```{r}
+# Generate list of subs
+subs<-list.files(path = paste0(workdir,"Data_Winter2017/"))
+
+# Extract text data
+extract_geo=function(sub){
+  files<-list.files(path=paste0(workdir,"Data_Winter2017/",sub,"/"),pattern = "log.decrypted")
+  output<-lapply(X = files,FUN = function(file){
+    geooutput<-read.csv(paste0(workdir,"Data_Winter2017/",sub,"/",file),
+                         header = FALSE,sep = " ",stringsAsFactors = FALSE)
+    geooutput})
+  output.df<-data.table::rbindlist(output, fill=TRUE)
+  cbind(sub,output.df)
+}
+
+```
+
+Text data
+```{r}
+# Generate list of subs
+subs<-list.files(path = paste0(workdir,"Data_Fall2016/"))
+
+# Extract text data
+extract_txt=function(sub){
+  files<-list.files(path=paste0(workdir,"Data_Fall2016/",sub,"/"),pattern = "log.decrypted")
+  output<-lapply(X = files,FUN = function(textfile){
+    textoutput<-read.csv(paste0(workdir,"Data_Fall2016/",sub,"/",textfile),
+                         header = FALSE,sep = " ",stringsAsFactors = FALSE)
+    textoutput})
+  output.df<-data.table::rbindlist(output, fill=TRUE)
+  cbind(sub,output.df)
+}
+extract_txt_out<-lapply(subs,extract_txt)
+extract_txt_out.df<-as.data.frame(do.call(rbind,extract_txt_out))
+```
