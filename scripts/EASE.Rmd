@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 
 Load required packages and scripts (no input needed)
 ```{r setup, include=FALSE}
-packages <- c( "tidyverse")
+packages <- c( "tidyverse","ggmap")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))
 }
@@ -58,12 +58,12 @@ extract_geo=function(sub){
                           stringsAsFactors = FALSE,
                           fill = TRUE) %>%
         select(V1,V2,V4,V5,V7) %>%
-        mutate(startdate=as.Date(substring(V1,3,last=nchar(V1))),
+        mutate(startdate=substring(V1,3,last=nchar(V1)),
                starttime=substring(V2,1,last=(nchar(V2)-1)),
-               enddate=as.Date(substring(V4,2,last=nchar(V4))),
+               enddate=substring(V4,2,last=nchar(V4)),
                endtime=substring(V5,1,last=8),
                lat=substring(V5,first=12,last=nchar(V5)),
-               long=substring(V7,first=1,last=(nchar(V7)-1))) %>%
+               lon=substring(V7,first=1,last=(nchar(V7)-1))) %>%
         select(-contains("V"))
       geooutput
     }
@@ -72,8 +72,8 @@ extract_geo=function(sub){
   output.df
   if (nrow(output.df)>0){cbind(sub,output.df)
   } else {
-    output<-cbind(sub,"NA","NA","NA","NA","NA","NA")
-    colnames(output)<-c("sub","startdate","starttime","enddate","endtime","lat","long")
+    output<-cbind(sub,NA,NA,NA,NA,NA,NA)
+    colnames(output)<-c("sub","startdate","starttime","enddate","endtime","lat","lon")
     output.df<-as.data.frame(output)
     output.df
   }
@@ -84,6 +84,33 @@ extract_geo_out.df<-na.omit(extract_geo_out.df)
 
 subs_with_geo<-unique(extract_geo_out.df$sub)
 print(paste0("There are ",length(subs_with_geo)," EASE participants with geolocation data"))
+```
+
+Analyze geolocation data
+```{r}
+testdata<-extract_geo_out.df %>%
+  mutate(lon=as.numeric(levels(lon)[lon]),
+         lat=as.numeric(levels(lat)[lat])) %>%
+  filter(!lat==0,!lon==0) %>%
+  select(lon,lat,sub)
+
+# first test of making maps
+testmap<- get_map(location = "Eugene", zoom = 14,
+                      maptype = "satellite", scale = 2)
+ggmap(testmap) +
+  # geom_point(data = testdata,
+  #            aes(x = lon, y = lat, size = sub,
+  #                colour = sub,
+  #                alpha = 0.8)) + 
+  # geom_path(data = testdata, aes(colour=sub),size = 1, lineend = "round") + 
+  #scale_color_gradient(colours = rainbow(7), breaks = seq(25, 200, by = 25))+
+  stat_density2d(aes(x = lon, y = lat, 
+  fill = ..level.. , alpha = ..level..),size = 2, bins = 4, 
+  data =(testdata[1000:4000,]), geom = 'polygon') +
+  scale_alpha(range = c(.8, 1), guide = FALSE) +
+  guides(fill = guide_colorbar(barwidth = 1.5, barheight = 10)) +
+  theme(legend.position="none")
+
 ```
 
 Text data
