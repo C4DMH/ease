@@ -20,7 +20,6 @@ if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))
 }
 lapply(packages, library, character.only = TRUE)
-workdir=as.character(read.table((paste0(getwd(),"/org/workdir.txt")))[[1]])
 
 # Kate's custom theme
 theme_kate <- function () { 
@@ -33,6 +32,8 @@ theme_kate <- function () {
         panel.background = element_blank(),
         legend.position="bottom")
 }
+
+workdir=as.character(read.table((paste0(getwd(),"/org/workdir.txt")))[[1]])
 ```
 
 Geolocation data
@@ -40,34 +41,49 @@ Geolocation data
 # Generate list of subs
 subs<-list.files(path = paste0(workdir,"Data_Winter2017/"))
 
-# Extract text data
+# Remove sub 21 because of some error in reading data & final entry
+subs<-subs[-21]
+subs<-subs[-23]
+
+# Extract geolocation data
 extract_geo=function(sub){
   files<-list.files(path=paste0(workdir,"Data_Winter2017/",sub,"/"),pattern = "log.decrypted")
   output<-lapply(X = files,FUN = function(file){
-    if (length(read.csv(paste0(workdir,"Data_Winter2017/",sub,"/",file),
-                       header = FALSE,sep = " ",stringsAsFactors = FALSE))>6){
-                         geooutput<-read.csv(paste0(workdir,"Data_Winter2017/",sub,"/",file),
-                                             header = FALSE,
-                                             sep = " ",
-                                             col.names = paste0("V",seq_len(200)),
-                                             stringsAsFactors = FALSE,
-                                             fill = TRUE) %>%
-                           select(V1,V2,V4,V5,V7) %>%
-                           mutate(startdate=as.Date(substring(V1,3,last=nchar(V1))),
-                                  starttime=substring(V2,1,last=(nchar(V2)-1)),
-                                  enddate=as.Date(substring(V4,2,last=nchar(V4))),
-                                  endtime=substring(V5,1,last=8),
-                                  lat=substring(V5,first=12,last=nchar(V5)),
-                                  long=substring(V7,first=1,last=(nchar(V7)-1))) %>%
-                           select(-contains("V"))
-                         geooutput
+    if (nchar(read.csv(paste0(workdir,"Data_Winter2017/",sub,"/",file),
+                       header = FALSE,sep = " ",stringsAsFactors = FALSE)$V5[[1]])>11){
+      geooutput<-read.csv(paste0(workdir,"Data_Winter2017/",sub,"/",file),
+                          header = FALSE,
+                          sep = " ",
+                          col.names = paste0("V",seq_len(200)),
+                          stringsAsFactors = FALSE,
+                          fill = TRUE) %>%
+        select(V1,V2,V4,V5,V7) %>%
+        mutate(startdate=as.Date(substring(V1,3,last=nchar(V1))),
+               starttime=substring(V2,1,last=(nchar(V2)-1)),
+               enddate=as.Date(substring(V4,2,last=nchar(V4))),
+               endtime=substring(V5,1,last=8),
+               lat=substring(V5,first=12,last=nchar(V5)),
+               long=substring(V7,first=1,last=(nchar(V7)-1))) %>%
+        select(-contains("V"))
+      geooutput
     }
   })
   output.df<-data.table::rbindlist(output, fill=TRUE)
-  cbind(sub,output.df)
+  output.df
+  if (nrow(output.df)>0){cbind(sub,output.df)
+  } else {
+    output<-cbind(sub,"NA","NA","NA","NA","NA","NA")
+    colnames(output)<-c("sub","startdate","starttime","enddate","endtime","lat","long")
+    output.df<-as.data.frame(output)
+    output.df
+  }
 }
 extract_geo_out<-lapply(subs,extract_geo)
 extract_geo_out.df<-as.data.frame(do.call(rbind,extract_geo_out))
+extract_geo_out.df<-na.omit(extract_geo_out.df)
+
+subs_with_geo<-unique(extract_geo_out.df$sub)
+print(paste0("There are ",length(subs_with_geo)," EASE participants with geolocation data"))
 ```
 
 Text data
