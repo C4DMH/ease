@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 
 Load required packages and scripts (no input needed)
 ```{r setup, include=FALSE}
-packages <- c( "tidyverse","ggmap")
+packages <- c( "tidyverse","ggmap","geosphere","lubridate","Imap","modeest")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))
 }
@@ -36,7 +36,7 @@ theme_kate <- function () {
 workdir=as.character(read.table((paste0(getwd(),"/org/workdir.txt")))[[1]])
 ```
 
-Geolocation data
+Extracting geolocation data from decryppted files
 ```{r}
 # Generate list of subs
 subs<-list.files(path = paste0(workdir,"Data_Winter2017/"))
@@ -89,8 +89,76 @@ write.csv(extract_geo_out.df,file = paste0(workdir,"Processed_Data_KLM/Geo/data/
 print(paste0("There are ",length(unique(extract_geo_out.df$sub))," EASE participants with geolocation data"))
 ```
 
+Processing geolocation data
+```{r}
+geodata<-read.csv(file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"),header = TRUE,stringsAsFactors = FALSE)[2:8]
+
+# Is the time point during the night or day?
+geodata_classifytime<-geodata %>%
+  mutate(timeofday=ifelse(hms(endtime)>hms(as.character("06:00:00")) &
+                            hms(endtime)<hms(as.character("09:00:00")),"early morning",
+                   ifelse(hms(endtime)>=hms(as.character("09:00:00")) &
+                            hms(endtime)<hms(as.character("18:00:00")),"day",
+                   ifelse(hms(endtime)>=hms(as.character("18:00:00")) &
+                            hms(endtime)<=hms(as.character("23:00:00")),"evening",
+                   ifelse(hms(endtime)<hms(as.character("06:00:00")) |
+                            hms(endtime)>hms(as.character("23:00:00")),"night",NA)))))
+
+
+# Calculate duration of measurement
+geodata_duration<- geodata_classifytime %>%
+  mutate(fullstart=ymd_hms(paste0(startdate," ",starttime)),
+         fullstop=ymd_hms(paste0(enddate," ",endtime))) %>%
+  mutate(duration=as.numeric((fullstop-fullstart),unit="secs"),
+         diff=ifelse(sub == lag(sub),
+                     as.numeric(fullstart - lag(fullstop),unit="secs"),NA)) %>%
+  mutate(duration_period=seconds_to_period(duration)) %>%
+  mutate(diff_period=seconds_to_period(diff)) 
+
+# Calculate distance between time points
+calc_distance=function(i){
+  round(gdist(lon.1 = geodata_duration$lon[i], 
+        lat.1 = geodata_duration$lat[i], 
+        lon.2 = geodata_duration$lon[i+1], 
+        lat.2 = geodata_duration$lat[i+1], 
+        units="miles"),7)}
+geodata_distance<-geodata_duration %>%
+  mutate(distance=unlist(lag(lapply(calc_distance,X = 1:6302))))
+
+write.csv(geodata_distance,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data_duration_distance.csv"))
+
+# Calculate distance between present location and "home"
+geodata_distance_home <-geodata_distance %>%
+  group_by(sub,timeofday) %>%
+  summarize(modelat=mlv(lat, method='mfv')[['M']],
+            modelon=mlv(lon, method='mfv')[['M']])
+
+homelocation<-ggmap(get_map(location = "Eugene", zoom = 14,
+                  maptype = "roadmap", scale = 2)) +
+  geom_point(data = geodata_distance_home,
+             aes(x = modelon, y = modelat,
+                 colour = timeofday),
+             size=3) 
+homelocation
+
+# Is this a stationary or transition period?
+
+
+
+
+# Is the time point a weekday or weekend?
+
+
+
+
+# Determine if participant was stationary or moving
+
+
+```
+
 Analyzing geolocation data
 ```{r}
+geodata<-read.csv(file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"),header = TRUE,stringsAsFactors = FALSE)[2:8]
 
 ```
 
@@ -98,12 +166,13 @@ Plotting geolocation data
 ```{r}
 resave_graphs=FALSE
 
+geodata<-read.csv(file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"),header = TRUE,stringsAsFactors = FALSE)[2:8]
+
 # first test of making maps
 testmap<- get_map(location = "Eugene", zoom = 14,
                   maptype = "roadmap", scale = 2)
 groupheat<-ggmap(testmap) +
-  geom_point(data = (extract_geo_out.df %>%
-                       select(lon,lat,sub)),
+  geom_point(data = geodata,
              aes(x = lon, y = lat,
                  colour = sub,
                  alpha = 1),
