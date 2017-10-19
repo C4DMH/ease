@@ -79,37 +79,50 @@ extract_geo=function(sub){
   }
 }
 extract_geo_out<-lapply(subs,extract_geo)
-extract_geo_out.df<-as.data.frame(do.call(rbind,extract_geo_out))
-extract_geo_out.df<-na.omit(extract_geo_out.df)
+extract_geo_out.df<-data.table::rbindlist(extract_geo_out) %>%
+  na.omit(.) %>%
+  mutate(lon=as.numeric(as.character(lon)),
+         lat=as.numeric(as.character(lat))) %>%
+  filter(!lat==0,!lon==0) 
 
-subs_with_geo<-unique(extract_geo_out.df$sub)
-print(paste0("There are ",length(subs_with_geo)," EASE participants with geolocation data"))
+write.csv(extract_geo_out.df,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"))
+print(paste0("There are ",length(unique(extract_geo_out.df$sub))," EASE participants with geolocation data"))
 ```
 
-Analyze geolocation data
+Analyzing geolocation data
 ```{r}
-testdata<-extract_geo_out.df %>%
-  mutate(lon=as.numeric(levels(lon)[lon]),
-         lat=as.numeric(levels(lat)[lat])) %>%
-  filter(!lat==0,!lon==0) %>%
-  select(lon,lat,sub)
+
+```
+
+Plotting geolocation data
+```{r}
+resave_graphs=FALSE
 
 # first test of making maps
 testmap<- get_map(location = "Eugene", zoom = 14,
-                      maptype = "satellite", scale = 2)
-ggmap(testmap) +
-  # geom_point(data = testdata,
-  #            aes(x = lon, y = lat, size = sub,
-  #                colour = sub,
-  #                alpha = 0.8)) + 
-  # geom_path(data = testdata, aes(colour=sub),size = 1, lineend = "round") + 
-  #scale_color_gradient(colours = rainbow(7), breaks = seq(25, 200, by = 25))+
+                  maptype = "roadmap", scale = 2)
+groupheat<-ggmap(testmap) +
+  geom_point(data = (extract_geo_out.df %>%
+                       select(lon,lat,sub)),
+             aes(x = lon, y = lat,
+                 colour = sub,
+                 alpha = 1),
+             size=3) + 
+  # geom_path(data = (extract_geo_out.df %>%
+  #                      select(lon,lat,sub)),
+  #           aes(colour=sub),
+  #           size = .5,
+  #           lineend = "round") + 
   stat_density2d(aes(x = lon, y = lat, 
-  fill = ..level.. , alpha = ..level..),size = 2, bins = 4, 
-  data =(testdata[1000:4000,]), geom = 'polygon') +
-  scale_alpha(range = c(.8, 1), guide = FALSE) +
+                     fill = ..level.. , alpha = ..level..), bins = 100, 
+                 data = (extract_geo_out.df %>%
+                       select(lon,lat,sub)), geom = 'polygon') +
+#  scale_alpha(range = c(.4, .7), guide = FALSE) +
   guides(fill = guide_colorbar(barwidth = 1.5, barheight = 10)) +
   theme(legend.position="none")
+
+if(resave_graphs){ggsave(filename=paste0(workdir,"Processed_Data_KLM/Geo/graphs/groupheat_nolines.png"),
+       plot=groupheat, width=6, height=5, units='in', dpi=300)}
 
 ```
 
