@@ -30,7 +30,7 @@ theme_kate <- function () {
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank(),
-        legend.position="bottom")
+        legend.position="none")
 }
 
 workdir=as.character(read.table((paste0(getwd(),"/org/workdir.txt")))[[1]])
@@ -94,6 +94,7 @@ Processing geolocation data
 geodata<-read.csv(file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"),header = TRUE,stringsAsFactors = FALSE)[2:8]
 
 # Is the time point during the night or day?
+# Is the time point a weekend or weekday?
 geodata_classifytime<-geodata %>%
   mutate(timeofday=ifelse(hms(endtime)>hms(as.character("06:00:00")) &
                             hms(endtime)<hms(as.character("09:00:00")),"early morning",
@@ -102,8 +103,9 @@ geodata_classifytime<-geodata %>%
                    ifelse(hms(endtime)>=hms(as.character("18:00:00")) &
                             hms(endtime)<=hms(as.character("23:00:00")),"evening",
                    ifelse(hms(endtime)<hms(as.character("06:00:00")) |
-                            hms(endtime)>hms(as.character("23:00:00")),"night",NA)))))
-
+                            hms(endtime)>hms(as.character("23:00:00")),"night",NA))))) %>%
+  mutate(day=wday(ymd(paste0(startdate)), label = TRUE)) %>%
+  mutate(wkday=ifelse(day=="Sun" | day=="Sat",0,1))
 
 # Calculate duration of measurement
 geodata_duration<- geodata_classifytime %>%
@@ -112,8 +114,11 @@ geodata_duration<- geodata_classifytime %>%
   mutate(duration=as.numeric((fullstop-fullstart),unit="secs"),
          diff=ifelse(sub == lag(sub),
                      as.numeric(fullstart - lag(fullstop),unit="secs"),NA)) %>%
-  mutate(duration_period=seconds_to_period(duration)) %>%
-  mutate(diff_period=seconds_to_period(diff)) 
+  filter(!diff < 0) %>%
+  mutate(diff=ifelse(sub == lag(sub),
+                     as.numeric(fullstart - lag(fullstop),unit="secs"),NA),
+         duration_period=seconds_to_period(duration)) %>%
+  mutate(diff_period=seconds_to_period(diff))
 
 # Calculate distance between time points
 calc_distance=function(i){
@@ -123,42 +128,72 @@ calc_distance=function(i){
         lat.2 = geodata_duration$lat[i+1], 
         units="miles"),7)}
 geodata_distance<-geodata_duration %>%
-  mutate(distance=unlist(lag(lapply(calc_distance,X = 1:6302))))
+  mutate(distance=unlist(lag(lapply(calc_distance,X = 1:nrow(geodata_duration)))))  %>%
+  mutate(distance=ifelse(is.na(diff),NA,distance))%>%
+  mutate(diff_period=seconds_to_period(diff))
 
-write.csv(geodata_distance,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data_duration_distance.csv"))
+#write.csv(geodata_distance,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data_duration_distance.csv"))
 
 # Calculate distance between present location and "home"
-geodata_distance_home <-geodata_distance %>%
+geodata_timeofday <-geodata_distance %>%
   group_by(sub,timeofday) %>%
   summarize(modelat=mlv(lat, method='mfv')[['M']],
-            modelon=mlv(lon, method='mfv')[['M']])
+            modelon=mlv(lon, method='mfv')[['M']]) %>%
+  ungroup()
 
-homelocation<-ggmap(get_map(location = "Eugene", zoom = 14,
-                  maptype = "roadmap", scale = 2)) +
-  geom_point(data = geodata_distance_home,
-             aes(x = modelon, y = modelat,
-                 colour = timeofday),
-             size=3) 
-homelocation
+geodata_distance_home<-left_join(geodata_distance,
+                                 (geodata_timeofday %>% 
+                                    filter(timeofday=="night") %>%
+                                    mutate(homelat=modelat,
+                                           homelon=modelon) %>%
+                                    select(sub,homelat,homelon)),
+                                 by="sub")
+
+calc_distance_home=function(i){
+  round(gdist(lon.1 = geodata_distance_home$homelon[i], 
+        lat.1 = geodata_distance_home$homelat[i], 
+        lon.2 = geodata_distance_home$lon[i], 
+        lat.2 = geodata_distance_home$lat[i], 
+        units="miles"),7)}
+geodata_distance_home<-geodata_distance_home %>%
+  mutate(distfromhome=unlist(lapply(calc_distance_home,X = 1:nrow(geodata_distance_home)))) %>%
+  mutate(home=ifelse(distfromhome<.02,1,0))
+
+write.csv(geodata_distance_home,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data_duration_distance.csv"))
+
+# How much time is spent at home?
+time_at_home<-geodata_distance_home %>%
+  group_by(sub,home) %>%
+  summarize(totaltime=sum(duration))%>%
+  ungroup() %>%
+  mutate(totaltime_period=seconds_to_period(as.numeric(totaltime)))
+
+# How much data do we have per participant?
+time_recording<-geodata_distance_home %>%
+  group_by(sub) %>%
+  summarize(totaltimerecording=sum(duration))%>%
+  ungroup() %>%
+  mutate(totaltime_period_recording=seconds_to_period(as.numeric(totaltimerecording)))
+
+time_at_home<-left_join(time_at_home,time_recording,by="sub") %>%
+  mutate(ratiotime=round(totaltime/totaltimerecording,3))%>%
+  mutate(totaltime_period_recording=seconds_to_period(as.numeric(totaltimerecording)),
+         totaltime_period=seconds_to_period(as.numeric(totaltime)))
+
+write.csv(time_at_home,file = paste0(workdir,"Processed_Data_KLM/Geo/data/time_at_home.csv"))
+
 
 # Is this a stationary or transition period?
 
+# Circadian movement
 
-
-
-# Is the time point a weekday or weekend?
-
-
-
-
-# Determine if participant was stationary or moving
-
+# 
 
 ```
 
 Analyzing geolocation data
 ```{r}
-geodata<-read.csv(file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"),header = TRUE,stringsAsFactors = FALSE)[2:8]
+geodata<-read.csv(file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data_duration_distance.csv"),header = TRUE,stringsAsFactors = FALSE)[2:8]
 
 ```
 
@@ -166,7 +201,57 @@ Plotting geolocation data
 ```{r}
 resave_graphs=FALSE
 
-geodata<-read.csv(file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"),header = TRUE,stringsAsFactors = FALSE)[2:8]
+geodata<-read.csv(file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data_duration_distance.csv"),header = TRUE,stringsAsFactors = FALSE)[2:8]
+
+# Plot movement across days for each participant
+onthemove.plot<-ggplot(geodata_distance %>% filter(!is.na(diff_period)),
+                          aes(x=fullstop, y=distance, colour=sub)) + 
+  geom_point(aes(colour=sub),size=1)+
+  facet_grid(.~sub, scales='free',drop = TRUE) +
+  labs(y="Distance from previous assessment point",
+       x="Date/time")+
+  theme_kate()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 10, hjust = 1),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())
+onthemove.plot
+
+onthemove.plot2<-ggplot(geodata_distance %>% filter(!is.na(diff_period)),
+                          aes(x=fullstop, y=distance, colour=sub)) + 
+  geom_point(aes(colour=sub),size=1)+
+  facet_grid(.~sub, scales='free',drop = TRUE) +
+  labs(y="Distance from previous assessment point",
+       x="Date/time")+
+  ylim(0,50) +
+  theme_kate()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 10, hjust = 1),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())
+onthemove.plot2
+
+# QC time of day locations
+qclocations<-ggmap(get_map(location = "Eugene", zoom = 14,
+                  maptype = "roadmap", scale = 2)) +
+  geom_point(data = geodata_timeofday,
+             aes(x = modelon, y = modelat,
+                 colour = timeofday),
+             size=7) 
+qclocations
+
+# Plot timecourse of distance from home across the day/week
+distfromhome.plot<-ggplot(geodata_distance_home %>% filter(!is.na(homelat)),
+                          aes(x=fullstop, y=distfromhome,colour=sub)) + 
+  geom_point(aes(colour=sub),size=1)+
+  facet_grid(.~sub, scales='free',drop = TRUE) +
+  labs(y="Distance from home (miles)",
+       x="Date/time")+
+  theme_kate()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 10, hjust = 1),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())
+distfromhome.plot
+
+
 
 # first test of making maps
 testmap<- get_map(location = "Eugene", zoom = 14,
