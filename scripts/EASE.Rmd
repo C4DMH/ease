@@ -85,7 +85,7 @@ extract_geo_out.df<-data.table::rbindlist(extract_geo_out) %>%
          lat=as.numeric(as.character(lat))) %>%
   filter(!lat==0,!lon==0) 
 
-write.csv(extract_geo_out.df,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"))
+# write.csv(extract_geo_out.df,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"))
 print(paste0("There are ",length(unique(extract_geo_out.df$sub))," EASE participants with geolocation data"))
 ```
 
@@ -159,7 +159,7 @@ geodata_distance_home<-geodata_distance_home %>%
   mutate(distfromhome=unlist(lapply(calc_distance_home,X = 1:nrow(geodata_distance_home)))) %>%
   mutate(home=ifelse(distfromhome<.02,1,0))
 
-write.csv(geodata_distance_home,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data_duration_distance.csv"))
+#write.csv(geodata_distance_home,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data_duration_distance.csv"))
 
 # How much time is spent at home?
 time_at_home<-geodata_distance_home %>%
@@ -180,8 +180,7 @@ time_at_home<-left_join(time_at_home,time_recording,by="sub") %>%
   mutate(totaltime_period_recording=seconds_to_period(as.numeric(totaltimerecording)),
          totaltime_period=seconds_to_period(as.numeric(totaltime)))
 
-write.csv(time_at_home,file = paste0(workdir,"Processed_Data_KLM/Geo/data/time_at_home.csv"))
-
+#write.csv(time_at_home,file = paste0(workdir,"Processed_Data_KLM/Geo/data/time_at_home.csv"))
 
 # Is this a stationary or transition period?
 
