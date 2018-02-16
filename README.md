@@ -1,1 +1,1 @@
-# cdmh
+# Scripts for processing EASE data
