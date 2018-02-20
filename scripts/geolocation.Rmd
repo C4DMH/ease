@@ -85,7 +85,7 @@ extract_geo_out.df<-data.table::rbindlist(extract_geo_out) %>%
          lat=as.numeric(as.character(lat))) %>%
   filter(!lat==0,!lon==0) 
 
-# write.csv(extract_geo_out.df,file = paste0(workdir,"Processed_Data_KLM/Geo/data/geo_data.csv"))
+# write.csv(extract_geo_out.df,file = paste0(workdir,"processed_geolocation/geo_data.csv"))
 print(paste0("There are ",length(unique(extract_geo_out.df$sub))," EASE participants with geolocation data"))
 ```
 
