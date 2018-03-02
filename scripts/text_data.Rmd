@@ -1,0 +1,130 @@
+---
+title: "text_data"
+author: "Kate Mills"
+date: "03/02/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+Load required packages and scripts (no input needed)
+```{r setup, include=FALSE}
+packages <- c( "tidyverse","ggmap","geosphere","lubridate","Imap","modeest")
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))
+}
+lapply(packages, library, character.only = TRUE)
+
+# Kate's custom theme
+theme_kate <- function () { 
+    theme_bw() +
+  theme_minimal(base_size = 14, base_family = "Avenir") +
+  theme(axis.line = element_line(colour = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        legend.position="none")
+}
+workdir<-as.character(read.table((paste0(getwd(),"/org/workdir.txt")))[[1]])
+```
+
+Extracting text data from decryppted files
+```{r}
+# Participant ID to device ID
+pidsid<-read.csv(paste0(workdir,"raw_data/demographics_ids/pid_sid.csv"),header = T,stringsAsFactors = F) %>%
+  mutate(pid=gsub("[^0-9]", "",pid))
+
+# Generate list of subs
+subs<-bind_rows((as.data.frame(list.files(path = paste0(workdir,"raw_data/keyboard/keyboard_logs_fall2016/"))) %>% 
+                   mutate(sid=.[[1]]))[-1],
+                (as.data.frame(list.files(path = paste0(workdir,"raw_data/keyboard/keyboard_logs_winter2017/"))) %>% 
+                   mutate(sid=.[[1]]))[-1]) %>%
+  distinct(sid) %>%
+  filter(!grepl(".py",sid))
+
+# some subs having trouble, so excluding for now
+subs<-subs[-c(10), ] 
+
+# Extract text data
+extract_text=function(sid){
+  if(file.exists(path=paste0(workdir,"raw_data/keyboard/keyboard_logs_fall2016/",sid,"/"))){
+  files2016<-(as.data.frame(list.files(path=paste0(workdir,"raw_data/keyboard/keyboard_logs_fall2016/",sid,"/"),pattern = "log.decrypted")) %>%
+                mutate(file=paste0(paste0(workdir,"raw_data/keyboard/keyboard_logs_fall2016/",sid,"/",.[[1]]))))}
+  if(file.exists(path=paste0(workdir,"raw_data/keyboard/keyboard_logs_winter2017/",sid,"/"))){
+    files2017<-(as.data.frame(list.files(path=paste0(workdir,"raw_data/keyboard/keyboard_logs_winter2017/",sid,"/"),pattern = "log.decrypted")) %>%
+                mutate(file=paste0(workdir,"raw_data/keyboard/keyboard_logs_winter2017/",sid,"/",.[[1]])))}
+  if(exists("files2016") & exists("files2017")) {
+    files<-append(files2016$file,files2017$file)
+  } else if(exists("files2016") & !exists("files2017")){
+      files<-files2016$file
+    } else if(exists("files2017")& !exists("files2016")){
+      files<-files2017$file
+    }
+  rm(files2016,files2017)
+  
+  output<-lapply(X = files,FUN = function(file){
+    if(nchar(read.csv(paste0(file),header = FALSE,sep = " ",stringsAsFactors = FALSE)$V5[[1]])<11){
+      transform1<-read.csv(file,
+                           header = FALSE,
+                           sep = " ",
+                           stringsAsFactors = FALSE,
+                           fill = TRUE)
+      numcols<-length(transform1)
+      transform2<-reshape(transform1, direction="long", sep='', varying=paste0('V', 6:length(transform1))) %>%
+        filter(!V=="") %>%
+        mutate(startdate=substring(V1,3,last=nchar(V1)),
+               starttime=substring(V2,1,last=(nchar(V2)-1)),
+               enddate=substring(V4,2,last=nchar(V4)),
+               endtime=substring(V5,1,last=8),
+               word=V) %>%
+        select(-contains("V"),-id,-time) %>%
+        arrange(startdate,starttime)
+      transform2
+    } else if(nchar(read.csv(paste0(file),header = FALSE,sep = " ",stringsAsFactors = FALSE)$V5[[1]])>11){
+      transform1<-read.csv(file,
+                           header = FALSE,
+                           sep = " ",
+                           stringsAsFactors = FALSE,
+                           fill = TRUE)
+      numcols<-length(transform1)
+      transform2<-reshape(transform1, direction="long", sep='', varying=paste0('V', 8:length(transform1))) %>%
+        filter(!V=="") %>%
+        mutate(startdate=substring(V1,3,last=nchar(V1)),
+               starttime=substring(V2,1,last=(nchar(V2)-1)),
+               enddate=substring(V4,2,last=nchar(V4)),
+               endtime=substring(V5,1,last=8),
+               word=V) %>%
+        select(-contains("V"),-id,-time) %>%
+        arrange(startdate,starttime)
+      transform2
+      }
+    })
+  
+  output.df<-data.table::rbindlist(output, fill=TRUE)
+  output.df
+  if (nrow(output.df)>0){cbind(sid,output.df)
+  } else {
+    output<-cbind(sid,NA,NA,NA,NA,NA)
+    colnames(output)<-c("sid","startdate","starttime","enddate","endtime","word")
+    output.df<-as.data.frame(output)
+    output.df
+  }
+}
+extract_text_out<-lapply(subs,extract_text)
+extract_text_out.df<-data.table::rbindlist(extract_text_out) %>%
+  na.omit(.)
+extract_text_out.df<-left_join(extract_text_out.df,pidsid) %>%
+  select(-sid) %>%
+  select(pid,startdate,starttime,enddate,endtime,word)
+
+
+write.csv(extract_text_out.df,file = paste0(workdir,"output/processed_text_data/text_data.csv"),row.names = FALSE)
+print(paste0("There are ",length(unique(extract_text_out.df$pid))," EASE participants with text data"))
+```
