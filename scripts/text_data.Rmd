@@ -128,3 +128,58 @@ extract_text_out.df<-left_join(extract_text_out.df,pidsid) %>%
 write.csv(extract_text_out.df,file = paste0(workdir,"output/processed_text_data/text_data.csv"),row.names = FALSE)
 print(paste0("There are ",length(unique(extract_text_out.df$pid))," EASE participants with text data"))
 ```
+
+Clean data for the streetwyze presentation
+## Will want to refine for future analyses to include all participants and also be more precise in cleaning the duplicates.
+```{r}
+cleaned_dupes<-extract_text_out.df %>%
+  distinct(sid, startdate, starttime, word, .keep_all = TRUE) %>%
+  filter(!startdate=="") %>%
+  filter(!grepl(pattern = " - ",x = word)) %>%
+  filter(grepl("-",startdate))
+
+print(paste0("There are ",length(unique(cleaned_dupes$pid))," EASE participants with text data"))
+write.csv(cleaned_dupes,file = paste0(workdir,"output/processed_text_data/text_data_cleanwyze.csv"),row.names = FALSE)
+```
+
+Analyze data
+```{r}
+View(cleaned_dupes)
+
+cleaned_dupes %>% 
+  anti_join(stop_words) %>% 
+  count(word, sort = TRUE) %>% 
+  top_n(20) %>% 
+  mutate(word = reorder(word, n)) %>% 
+  ggplot(aes(word, n)) +
+  geom_col(fill = "purple") +
+  coord_flip()
+
+get_sentiments("bing")
+get_sentiments("afinn")
+
+cleaned_dupes %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(sentiment, word, sort = TRUE)
+
+cleaned_dupes %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(pid) %>% 
+  count(score, word, sort = TRUE)
+
+head(cleaned_dupes)
+library(lubridate)
+cleaned_dupes$startdate <- ymd(cleaned_dupes$startdate)
+
+cleaned_dupes$day <- weekdays(cleaned_dupes$startdate)
+
+cleaned_dupes %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(day) %>% 
+  summarize(mean_score = mean(score))
+
+#cleaned_dupes %>% 
+#  inner_join(get_sentiments("bing")) %>% 
+#  group_by(day) %>% 
+#  summarise(count(sentiment))
+```
