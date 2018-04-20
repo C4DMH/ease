@@ -15,7 +15,9 @@ knitr::opts_chunk$set(
 
 Load required packages and scripts (no input needed)
 ```{r setup, include=FALSE}
-packages <- c( "tidyverse","ggmap","geosphere","lubridate","Imap","modeest")
+packages <- c( "tidyverse","ggmap",
+               "tidytext","geosphere",
+               "lubridate","Imap","modeest")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))
 }
@@ -30,7 +32,7 @@ theme_kate <- function () {
         panel.grid.minor = element_blank(),
         panel.border = element_blank(),
         panel.background = element_blank(),
-        legend.position="none")
+        legend.position="bottom")
 }
 workdir<-as.character(read.table((paste0(getwd(),"/org/workdir.txt")))[[1]])
 ```
@@ -130,8 +132,11 @@ print(paste0("There are ",length(unique(extract_text_out.df$pid))," EASE partici
 ```
 
 Clean data for the streetwyze presentation
-## Will want to refine for future analyses to include all participants and also be more precise in cleaning the duplicates.
+NOTE: We will want to refine for future analyses to include all participants and also be more precise in cleaning the duplicates.
+
 ```{r}
+extract_text_out.df<-read.csv(paste0(workdir,"output/processed_text_data/text_data.csv"))
+
 cleaned_dupes<-extract_text_out.df %>%
   distinct(sid, startdate, starttime, word, .keep_all = TRUE) %>%
   filter(!startdate=="") %>%
@@ -144,9 +149,13 @@ write.csv(cleaned_dupes,file = paste0(workdir,"output/processed_text_data/text_d
 
 Analyze data
 ```{r}
-View(cleaned_dupes)
+cleaned_dupes<-read.csv(paste0(workdir,"output/processed_text_data/text_data_cleanwyze.csv"))
 
-cleaned_dupes %>% 
+get_sentiments("bing")
+
+get_sentiments("afinn")
+
+out1<-cleaned_dupes %>% 
   anti_join(stop_words) %>% 
   count(word, sort = TRUE) %>% 
   top_n(20) %>% 
@@ -154,9 +163,6 @@ cleaned_dupes %>%
   ggplot(aes(word, n)) +
   geom_col(fill = "purple") +
   coord_flip()
-
-get_sentiments("bing")
-get_sentiments("afinn")
 
 cleaned_dupes %>% 
   inner_join(get_sentiments("bing")) %>% 
@@ -168,18 +174,86 @@ cleaned_dupes %>%
   count(score, word, sort = TRUE)
 
 head(cleaned_dupes)
-library(lubridate)
+
 cleaned_dupes$startdate <- ymd(cleaned_dupes$startdate)
 
 cleaned_dupes$day <- weekdays(cleaned_dupes$startdate)
 
-cleaned_dupes %>% 
+cleaned_dupes <- cleaned_dupes %>%
+  mutate(fullstart=ymd_hms(paste0(startdate," ",starttime)),
+         fullstop=ymd_hms(paste0(enddate," ",endtime)))
+
+afinn_week<-cleaned_dupes %>% 
   inner_join(get_sentiments("afinn")) %>% 
   group_by(day) %>% 
   summarize(mean_score = mean(score))
 
-#cleaned_dupes %>% 
-#  inner_join(get_sentiments("bing")) %>% 
-#  group_by(day) %>% 
-#  summarise(count(sentiment))
+bing_week<-cleaned_dupes %>% 
+  inner_join(get_sentiments("bing")) %>%
+  group_by(day) %>% 
+  count(.,sentiment)
+
+# Plots
+bing_week_graph<-ggplot(data=bing_week, 
+                        aes(x=factor(day,levels=c("Monday",
+                                                  "Tuesday",
+                                                  "Wednesday",
+                                                  "Thursday",
+                                                  "Friday",
+                                                  "Saturday",
+                                                  "Sunday")),
+                            y=n,
+                            group=sentiment,
+                            colour=sentiment)) +
+  scale_color_manual(values=c("#8C2155", "#75BBA7"))+
+  ylab("frequency") +
+  xlab("")+
+  geom_line(size=1) +
+  theme_kate() +
+  theme(axis.text.x = element_text(angle = 20, hjust = 1))
+bing_week_graph
+
+ggsave(filename=paste0(workdir,"output/scored_text_data/graphs/bing_week_graph.png"),plot=bing_week_graph, width=6, height=5, units='in', dpi=300)
+
+
+# Join words and geolocation
+pidsid<-read.csv(paste0(workdir,"raw_data/demographics_ids/pid_sid.csv"),header = T,stringsAsFactors = F) %>%
+  mutate(pid=gsub("[^0-9]", "",pid)) %>%
+  mutate(pid=sub("(^|[^0-9])0+", "\\1", pid, perl = TRUE))
+
+geolocation<-left_join((geodata_distance_home %>% mutate(sid=sub)),pidsid) %>%
+  mutate(pid=as.integer(pid))%>%
+  select(-sub,-sid)
+
+word_geo<-left_join(geolocation,cleaned_dupes,
+                   by=c("pid", "fullstart", "fullstop"))
+
+bing_timeofday<-word_geo %>% 
+  inner_join(get_sentiments("bing")) %>%
+  group_by(timeofday) %>% 
+  count(.,sentiment)
+
+# Plots
+bing_timeofday_graph<-ggplot(data=bing_timeofday, 
+                        aes(x=factor(timeofday,levels=c("early morning",
+                                                  "day",
+                                                  "evening",
+                                                  "night")),
+                            y=n,
+                            group=sentiment,
+                            colour=sentiment)) +
+  scale_color_manual(values=c("#8C2155", "#75BBA7"))+
+  ylab("frequency") +
+  xlab("")+
+  geom_line(size=1) +
+  theme_kate() +
+  theme(axis.text.x = element_text(angle = 20, hjust = 1))
+bing_timeofday_graph
+
+bing_home<-word_geo %>% 
+  inner_join(get_sentiments("bing")) %>%
+  group_by(home) %>% 
+  count(.,sentiment)
+
+
 ```
