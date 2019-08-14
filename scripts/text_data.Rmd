@@ -34,6 +34,7 @@ theme_kate <- function () {
         panel.background = element_blank(),
         legend.position="bottom")
 }
+# So publicly avail code does not show location, first make /org/workdir.txt in your current directory, and first line should be location of data. End with a carriage return otherwise read.table won't work:
 workdir<-as.character(read.table((paste0(getwd(),"/org/workdir.txt")))[[1]])
 ```
 
@@ -41,6 +42,7 @@ Extracting text data from decryppted files
 ```{r}
 # Participant ID to device ID
 pidsid<-read.csv(paste0(workdir,"raw_data/demographics_ids/pid_sid.csv"),header = T,stringsAsFactors = F) %>%
+  rename(pid="ï..pid") %>% 
   mutate(pid=gsub("[^0-9]", "",pid))
 
 # Generate list of subs
