@@ -4,7 +4,7 @@ toplevel_dir_2 = "/Volumes/psychology/a/Adapt/Studies/EASE/raw_data/video_diarie
 
 # List all top level dirs
 toplevel_dirs = [toplevel_dir_1, toplevel_dir_2]
-
+out_dir = "/Volumes/psychology/a/Adapt/Studies/EASE/output/processed_video_diaries/openface_csv_output_2019_09_06/"
 # List all extensions separated with a comma (as a tuple), for ex ".mp4", ".mov"
 ext = ".mp4",".avi",".mov"
 years = ["2016", "2017"]
@@ -19,4 +19,4 @@ time_re_4 = "[0-2]{1}" + "[0-9]{1}" + "[0-5]{1}" + "[0-9]{1}"
 # (so if one is a substring but you prefer the bigger string, list the bigger string first)
 time_formats = [time_re_1, time_re_2, time_re_3, time_re_4]
 
-
+open_face_cmd_path = '/Users/laurenkahn/Desktop/OpenFace/build/bin/FeatureExtraction'
