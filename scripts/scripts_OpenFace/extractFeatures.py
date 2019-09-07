@@ -24,11 +24,12 @@ def main():
     							time_str = extractTime(v,date_end_idx)
     							output_name = sub + "_" + date_str + "_" + time_str
     							print(output_name)
-    							
-    							# command to bash
-    							print("Analyzing video %s of participant %s\n" % (v,sub))
-    							bashCommand = [cfg.open_face_cmd_path,'-f', os.path.join(vid_path,v), '-aus', '-of', output_name, '-out_dir', cfg.out_dir]
-    							subprocess.check_output(bashCommand)
+    							out_path = os.path.join(cfg.out_dir,output_name + ".csv")
+    							if not os.path.isfile(out_path):
+    								# command to bash
+    								print("Analyzing video %s of participant %s\n" % (v,sub))
+    								bashCommand = [cfg.open_face_cmd_path,'-f', os.path.join(vid_path,v), '-aus', '-of', output_name, '-out_dir', cfg.out_dir]
+    								subprocess.check_output(bashCommand)
 
 def extractDate(filename,dev_id):
 	"""    

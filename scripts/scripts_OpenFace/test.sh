@@ -3,3 +3,4 @@ filename='/Volumes/psychology/a/Adapt/Studies/EASE/raw_data/video_diaries/video_
 build/bin/FeatureExtraction -f $filename
 
 build/bin/FeatureExtraction -f $filename -aus -out_dir ~/Desktop/openFaceOutput
+
