@@ -92,9 +92,10 @@ def extractTime(filename,date_end_idx):
 			
 			# Construct time str
 			if time_str[2]=="-":
-				time_str[0:5] + sec_suffix
+				time_str = time_str[0:5] + sec_suffix
 			else:
-				time_str[0:2] + "-" + time_str[2:4] + sec_suffix
+				time_str = time_str[0:2] + "-" + time_str[2:4] + sec_suffix
+		
 		elif i+1<len(cfg.time_formats):
 			i=i+1
 		else:
