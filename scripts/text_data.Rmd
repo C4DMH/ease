@@ -151,7 +151,7 @@ write.csv(cleaned_dupes,file = paste0(workdir,"output/processed_text_data/text_d
 
 Analyze data
 ```{r}
-cleaned_dupes<-read.csv(paste0(workdir,"output/processed_text_data/text_data_cleanwyze.csv"))
+cleaned_dupes<-read.csv(paste0(workdir,"output/processed_text_data/text_data_cleaned.csv"))
 
 get_sentiments("bing")
 
@@ -173,7 +173,7 @@ cleaned_dupes %>%
 cleaned_dupes %>% 
   inner_join(get_sentiments("afinn")) %>% 
   group_by(pid) %>% 
-  count(score, word, sort = TRUE)
+  count(value, word, sort = TRUE)
 
 head(cleaned_dupes)
 
@@ -265,14 +265,14 @@ Mean text by subject (Michelle)
 afinn_subj<-cleaned_dupes %>% 
   inner_join(get_sentiments("afinn")) %>% 
   group_by(pid) %>% 
-  summarize(mean_score = mean(score))
+  summarize(mean_score = mean(value))
 
 bing_subj<-cleaned_dupes %>% 
   inner_join(get_sentiments("bing")) %>%
   group_by(pid) %>% 
   count(.,sentiment)
 
-write.csv(afinn_subj, file = "A:/Studies/EASE/output/scored_text_data/afinn_scores.csv")
-write.csv(bing_subj, file = "A:/Studies/EASE/output/scored_text_data/bing_scores.csv")
+write.csv(afinn_subj, file = "A:/Adapt/Studies/EASE/output/scored_text_data/afinn_scores.csv")
+write.csv(bing_subj, file = "A:/Adapt/Studies/EASE/output/scored_text_data/bing_scores.csv")
 ```
 
