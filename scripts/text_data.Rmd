@@ -38,8 +38,8 @@ theme_kate <- function () {
 workdir<-as.character(read.table((paste0(getwd(),"/org/workdir.txt")))[[1]])
 ```
 
-Extracting text data from decryppted files
-```{r}
+Extracting text data from decrypted files
+```{r extract}
 # Participant ID to device ID
 pidsid<-read.csv(paste0(workdir,"raw_data/demographics_ids/pid_sid.csv"),header = T,stringsAsFactors = F) %>%
   rename(pid="ï..pid") %>% 
@@ -133,10 +133,9 @@ write.csv(extract_text_out.df,file = paste0(workdir,"output/processed_text_data/
 print(paste0("There are ",length(unique(extract_text_out.df$pid))," EASE participants with text data"))
 ```
 
-Clean data for the streetwyze presentation
-NOTE: We will want to refine for future analyses to include all participants and also be more precise in cleaning the duplicates.
 
-```{r}
+
+```{r remove duplicates}
 extract_text_out.df<-read.csv(paste0(workdir,"output/processed_text_data/text_data.csv"))
 
 cleaned_dupes<-extract_text_out.df %>%
@@ -149,8 +148,8 @@ print(paste0("There are ",length(unique(cleaned_dupes$pid))," EASE participants 
 write.csv(cleaned_dupes,file = paste0(workdir,"output/processed_text_data/text_data_cleanwyze.csv"),row.names = FALSE)
 ```
 
-Analyze data
-```{r}
+Analyze data - for more info, see https://www.tidytextmining.com/sentiment.html
+```{r sentiments}
 cleaned_dupes<-read.csv(paste0(workdir,"output/processed_text_data/text_data_cleaned.csv"))
 
 get_sentiments("bing")
@@ -188,7 +187,7 @@ cleaned_dupes <- cleaned_dupes %>%
 afinn_week<-cleaned_dupes %>% 
   inner_join(get_sentiments("afinn")) %>% 
   group_by(day) %>% 
-  summarize(mean_score = mean(score))
+  summarize(mean_score = mean(value))
 
 bing_week<-cleaned_dupes %>% 
   inner_join(get_sentiments("bing")) %>%
@@ -267,12 +266,24 @@ afinn_subj<-cleaned_dupes %>%
   group_by(pid) %>% 
   summarize(mean_score = mean(value))
 
+afinn_subj_week<-cleaned_dupes %>% 
+  inner_join(get_sentiments("afinn")) %>% 
+  group_by(pid, week) %>% 
+  summarize(mean_score = mean(value))
+
 bing_subj<-cleaned_dupes %>% 
   inner_join(get_sentiments("bing")) %>%
   group_by(pid) %>% 
   count(.,sentiment)
 
+bing_subj_week<-cleaned_dupes %>% 
+  inner_join(get_sentiments("bing")) %>%
+  group_by(pid, week) %>% 
+  count(.,sentiment)
+
 write.csv(afinn_subj, file = "A:/Adapt/Studies/EASE/output/scored_text_data/afinn_scores.csv")
+write.csv(afinn_subj_week, file = "A:/Adapt/Studies/EASE/output/scored_text_data/afinn_scores_byweek.csv")
 write.csv(bing_subj, file = "A:/Adapt/Studies/EASE/output/scored_text_data/bing_scores.csv")
+write.csv(bing_subj_week, file = "A:/Adapt/Studies/EASE/output/scored_text_data/bing_scores_byweek.csv")
 ```
 
