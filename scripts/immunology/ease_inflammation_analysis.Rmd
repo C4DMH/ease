@@ -1,0 +1,162 @@
+---
+title: "ease_inflammation_paper"
+author: "Michelle Byrne"
+date: "1/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Set Working Directory
+```{r Set Directory, message=FALSE, warning=FALSE, include=FALSE}
+getwd()
+#You should set this to the working analysis/data directory on your local git folder for ease 
+workdir='C:/Users/michelle/Google%20Drive/Professional/Post%20Thesis/First%20author/EASE_Inflammation'
+```
+
+#Load data
+```{r load data}
+library(readxl)
+immunology_plus_dataset <- read_excel("C:/Users/michelle/Google Drive/Professional/Post Thesis/First author/EASE_Inflammation/immunology_plus_dataset.xlsx", 
+    sheet = "all_data_avg")
+View(immunology_plus_dataset)
+```
+
+# Decriptives
+```{r descriptives}
+summary(immunology_plus_dataset)
+ease_summary <- data.frame("il1b_mean" =
+                    mean(immunology_plus_dataset$il1b_w_avg,                          na.rm = TRUE))
+ease_summary$il1b_sd <- sd(immunology_plus_dataset$il1b_w_avg, na.rm = TRUE)
+
+ease_summary$crp_mean <- mean(immunology_plus_dataset$crp_w_avg, na.rm = TRUE)
+ease_summary$crp_sd <- sd(immunology_plus_dataset$crp_w_avg, na.rm = TRUE)
+
+ease_summary$afinn_mean <- mean(immunology_plus_dataset$afinn_avg, na.rm = TRUE)
+ease_summary$afinn_sd <- sd(immunology_plus_dataset$afinn_avg, na.rm = TRUE)
+
+ease_summary$bingposratio_mean <- mean(immunology_plus_dataset$bing_pos_ratio, na.rm = TRUE)
+ease_summary$bingposratio_sd <- sd(immunology_plus_dataset$bing_pos_ratio, na.rm = TRUE)
+
+ease_summary$bingneg_mean <- mean(immunology_plus_dataset$bing_tot_neg, na.rm = TRUE)
+ease_summary$bingneg_sd <- sd(immunology_plus_dataset$bing_tot_neg, na.rm = TRUE)
+
+ease_summary$bingpos_mean <- mean(immunology_plus_dataset$bing_tot_pos, na.rm = TRUE)
+ease_summary$bingpos_sd <- sd(immunology_plus_dataset$bing_tot_pos, na.rm = TRUE)
+
+ease_summary$bingaff_mean <- mean(immunology_plus_dataset$bing_tot_aff, na.rm = TRUE)
+ease_summary$bingaff_sd <- sd(immunology_plus_dataset$bing_tot_aff, na.rm = TRUE)
+
+ease_summary$dassanx_mean <- mean(immunology_plus_dataset$dass_anx_avg, na.rm = TRUE)
+ease_summary$dassanx_sd <- sd(immunology_plus_dataset$dass_anx_avg, na.rm = TRUE)
+
+ease_summary$dassdep_mean <- mean(immunology_plus_dataset$dass_dep_avg, na.rm = TRUE)
+ease_summary$dassdep_sd <- sd(immunology_plus_dataset$dass_dep_avg, na.rm = TRUE)
+
+ease_summary$dassstr_mean <- mean(immunology_plus_dataset$dass_str_avg, na.rm = TRUE)
+ease_summary$dassstr_sd <- sd(immunology_plus_dataset$dass_str_avg, na.rm = TRUE)
+
+ease_summary$pss_mean <- mean(immunology_plus_dataset$pss_avg, na.rm = TRUE)
+ease_summary$pss_sd <- sd(immunology_plus_dataset$pss_avg, na.rm = TRUE)
+
+ease_summary$ssic_mean <- mean(immunology_plus_dataset$ssic_avg, na.rm = TRUE)
+ease_summary$ssic_sd <- sd(immunology_plus_dataset$ssic_avg, na.rm = TRUE)
+
+ease_summary$sleep_mean <- mean(immunology_plus_dataset$tot_hr_sleep, na.rm = TRUE)
+ease_summary$sleep_sd <- sd(immunology_plus_dataset$tot_hr_sleep, na.rm = TRUE)
+
+ease_summary$straintot_mean <- mean(immunology_plus_dataset$strain_ct_stress_tot, na.rm = TRUE)
+ease_summary$straintot_sd <- sd(immunology_plus_dataset$strain_ct_stress_tot, na.rm = TRUE)
+
+ease_summary$strainacu_mean <- mean(immunology_plus_dataset$strain_ct_acute_tot, na.rm = TRUE)
+ease_summary$strainacu_sd <- sd(immunology_plus_dataset$strain_ct_acute_tot, na.rm = TRUE)
+
+ease_summary$strainchr_mean <- mean(immunology_plus_dataset$strain_ct_chronic_tot, na.rm = TRUE)
+ease_summary$strainchr_sd <- sd(immunology_plus_dataset$strain_ct_chronic_tot, na.rm = TRUE)
+```
+
+
+#Simple correlations - because this paper is only about exploratory analyses with pilot data
+```{r corrleations}
+library(corrplot)
+library(Hmisc)
+library(tidyverse)
+all_4corr <- select(immunology_plus_dataset, "il1b_w_avg","crp_w_avg","afinn_avg","bing_pos_ratio","bing_tot_neg", "bing_tot_pos","bing_tot_aff","dass_anx_avg","dass_dep_avg","dass_str_avg","pss_avg","ssic_avg","tot_hr_sleep","strain_ct_stress_tot","strain_ct_acute_tot","strain_ct_chronic_tot")
+
+names(all_4corr)[names(all_4corr) == "il1b_w_avg"] <- "IL-1 Beta"
+names(all_4corr)[names(all_4corr) == "crp_w_avg"] <- "CRP"
+names(all_4corr)[names(all_4corr) == "afinn_avg"] <- "AFINN score"
+names(all_4corr)[names(all_4corr) == "bing_pos_ratio"] <- "Bing positive:total"
+names(all_4corr)[names(all_4corr) == "bing_tot_neg"] <- "Bing negative"
+names(all_4corr)[names(all_4corr) == "bing_tot_pos"] <- "Bing positive"
+names(all_4corr)[names(all_4corr) == "bing_tot_aff"] <- "Bing affective"
+names(all_4corr)[names(all_4corr) == "dass_anx_avg"] <- "DASS anxiety"
+names(all_4corr)[names(all_4corr) == "dass_dep_avg"] <- "DASS depression"
+names(all_4corr)[names(all_4corr) == "dass_str_avg"] <- "DASS stress"
+names(all_4corr)[names(all_4corr) == "pss_avg"] <- "PSS"
+names(all_4corr)[names(all_4corr) == "ssic_avg"] <- "SSiC"
+names(all_4corr)[names(all_4corr) == "tot_hr_sleep"] <- "Total hours sleep"
+names(all_4corr)[names(all_4corr) == "strain_ct_stress_tot"] <- "STRAIN count stressors"
+names(all_4corr)[names(all_4corr) == "strain_ct_acute_tot"] <- "STRAIN acute stressors"
+names(all_4corr)[names(all_4corr) == "strain_ct_chronic_tot"] <- "STRAIN chronic stressors"
+
+ease_corr <- rcorr(as.matrix(all_4corr))
+ease_cor_plot <- corrplot(ease_corr$r, method = "number", type = "upper", order = "original", tl.col = "black", tl.srt = 45, tl.cex = .7, number.cex = .7, diag = FALSE)
+ease_corr$r
+ease_corr$P
+```
+
+```{r byweek}
+attach(immunology_plus_dataset)
+
+immunology_plus_dataset$siga_w_t1 <- as.numeric(siga_w_t1)
+immunology_plus_dataset$il1b_w_t1 <- as.numeric(il1b_w_t1)
+immunology_plus_dataset$crp_w_t1 <- as.numeric(crp_w_t1)
+immunology_plus_dataset$dass_anx_t1 <- as.numeric(dass_anx_t1)
+immunology_plus_dataset$dass_dep_t1 <- as.numeric(dass_dep_t1)
+immunology_plus_dataset$dass_str_t1 <- as.numeric(dass_str_t1)
+immunology_plus_dataset$pss_tot_t1 <- as.numeric(pss_tot_t1)
+immunology_plus_dataset$ssic_mean_t1 <- as.numeric(ssic_mean_t1)
+immunology_plus_dataset$psqi_tot_hr_t1 <- as.numeric(psqi_tot_hr_t1)
+immunology_plus_dataset$afinn_score_t1 <- as.numeric(afinn_score_t1)
+immunology_plus_dataset$bing_pos_ratio_t1 <- as.numeric(bing_pos_ratio_t1)
+immunology_plus_dataset$bing_tot_neg_t1 <- as.numeric(bing_tot_neg_t1)
+immunology_plus_dataset$bing_tot_pos_t1 <- as.numeric(bing_tot_pos_t1)
+immunology_plus_dataset$bing_tot_aff_t1 <- as.numeric(bing_tot_aff_t1)
+
+immunology_plus_dataset$siga_w_t2 <- as.numeric(siga_w_t2)
+immunology_plus_dataset$il1b_w_t2 <- as.numeric(il1b_w_t2)
+immunology_plus_dataset$crp_w_t2 <- as.numeric(crp_w_t2)
+immunology_plus_dataset$dass_anx_t2 <- as.numeric(dass_anx_t2)
+immunology_plus_dataset$dass_dep_t2 <- as.numeric(dass_dep_t2)
+immunology_plus_dataset$dass_str_t2 <- as.numeric(dass_str_t2)
+immunology_plus_dataset$pss_tot_t2 <- as.numeric(pss_tot_t2)
+immunology_plus_dataset$ssic_mean_t2 <- as.numeric(ssic_mean_t2)
+immunology_plus_dataset$psqi_tot_hr_t2 <- as.numeric(psqi_tot_hr_t2)
+immunology_plus_dataset$afinn_score_t2 <- as.numeric(afinn_score_t2)
+immunology_plus_dataset$bing_pos_ratio_t2 <- as.numeric(bing_pos_ratio_t2)
+immunology_plus_dataset$bing_tot_neg_t2 <- as.numeric(bing_tot_neg_t2)
+immunology_plus_dataset$bing_tot_pos_t2 <- as.numeric(bing_tot_pos_t2)
+immunology_plus_dataset$bing_tot_aff_t2 <- as.numeric(bing_tot_aff_t2)
+
+siga_w_byweek <- t.test(immunology_plus_dataset$siga_w_t1, immunology_plus_dataset$siga_w_t2, paired=TRUE, alternative = "two.sided")
+il1b_w_byweek <- t.test(immunology_plus_dataset$il1b_w_t1, immunology_plus_dataset$il1b_w_t2, paired=TRUE, alternative = "two.sided")
+crp_w_byweek <- t.test(immunology_plus_dataset$crp_w_t1, immunology_plus_dataset$crp_w_t2, paired=TRUE, alternative = "two.sided")
+dass_anx_byweek <- t.test(immunology_plus_dataset$dass_anx_t1, immunology_plus_dataset$dass_anx_t2, paired=TRUE, alternative = "two.sided")
+dass_dep_byweek <- t.test(immunology_plus_dataset$dass_dep_t1, immunology_plus_dataset$dass_dep_t2, paired=TRUE, alternative = "two.sided")
+dass_str_byweek <- t.test(immunology_plus_dataset$dass_str_t1, immunology_plus_dataset$dass_str_t2, paired=TRUE, alternative = "two.sided")
+pss_tot_byweek <- t.test(immunology_plus_dataset$pss_tot_t1, immunology_plus_dataset$pss_tot_t2, paired=TRUE, alternative = "two.sided")
+ssic_mean_byweek <- t.test(immunology_plus_dataset$ssic_mean_t1, immunology_plus_dataset$ssic_mean_t2, paired=TRUE, alternative = "two.sided")
+psqi_tot_hr_byweek <- t.test(immunology_plus_dataset$psqi_tot_hr_t1, immunology_plus_dataset$psqi_tot_hr_t2, paired=TRUE, alternative = "two.sided")
+afinn_score_byweek <- t.test(immunology_plus_dataset$afinn_score_t1, immunology_plus_dataset$afinn_score_t2, paired=TRUE, alternative = "two.sided")
+bing_pos_ratio_byweek <- t.test(immunology_plus_dataset$bing_pos_ratio_t1, immunology_plus_dataset$bing_pos_ratio_t2, paired=TRUE, alternative = "two.sided")
+bing_tot_neg_byweek <- t.test(immunology_plus_dataset$bing_tot_neg_t1, immunology_plus_dataset$bing_tot_neg_t2, paired=TRUE, alternative = "two.sided")
+bing_tot_pos_byweek <- t.test(immunology_plus_dataset$bing_tot_pos_t1, immunology_plus_dataset$bing_tot_pos_t2, paired=TRUE, alternative = "two.sided")
+bing_tot_aff_byweek <- t.test(immunology_plus_dataset$bing_tot_aff_t1, immunology_plus_dataset$bing_tot_aff_t2, paired=TRUE, alternative = "two.sided")
+
+mean(immunology_plus_dataset$dass_anx_t1, na.rm=TRUE)
+mean(immunology_plus_dataset$dass_anx_t2, na.rm=TRUE)
+```
+
