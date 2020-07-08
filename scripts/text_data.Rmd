@@ -13,6 +13,8 @@ knitr::opts_chunk$set(
 )
 ```
 
+NOTE: If there is already a text_data.csv in the processed text data folder, then you can skip ahead to {r remove duplicates} or {r sentiments}
+
 Load required packages and scripts (no input needed)
 ```{r setup, include=FALSE}
 packages <- c( "tidyverse","ggmap",
@@ -42,7 +44,7 @@ Extracting text data from decrypted files
 ```{r extract}
 # Participant ID to device ID
 pidsid<-read.csv(paste0(workdir,"raw_data/demographics_ids/pid_sid.csv"),header = T,stringsAsFactors = F) %>%
-  rename(pid="ï..pid") %>% 
+  #rename(pid="ï..pid") %>% 
   mutate(pid=gsub("[^0-9]", "",pid))
 
 # Generate list of subs
@@ -152,6 +154,64 @@ Analyze data - for more info, see https://www.tidytextmining.com/sentiment.html
 ```{r sentiments}
 cleaned_dupes<-read.csv(paste0(workdir,"output/processed_text_data/text_data_cleaned.csv"))
 
+# Note: MB wanted to get total (any) words by participant and the only way she could figure out how is to hard code by participant ID (sorry)"
+
+P001_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"001"' & cleaned_dupes$week==1), ])
+P001_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"001"' & cleaned_dupes$week==2), ])
+P003_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"003"' & cleaned_dupes$week==1), ])
+P003_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"003"' & cleaned_dupes$week==2), ])
+P006_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"006"' & cleaned_dupes$week==1), ])
+P006_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"006"' & cleaned_dupes$week==2), ])
+P009_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"009"' & cleaned_dupes$week==1), ])
+P009_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"009"' & cleaned_dupes$week==2), ])
+P011_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"011"' & cleaned_dupes$week==1), ])
+P011_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"011"' & cleaned_dupes$week==2), ])
+P012_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"012"' & cleaned_dupes$week==1), ])
+P012_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"012"' & cleaned_dupes$week==2), ])
+P013_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"013"' & cleaned_dupes$week==1), ])
+P013_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"013"' & cleaned_dupes$week==2), ])
+P014_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"014"' & cleaned_dupes$week==1), ])
+P014_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"014"' & cleaned_dupes$week==2), ])
+P015_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"015"' & cleaned_dupes$week==1), ])
+P015_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"015"' & cleaned_dupes$week==2), ])
+P016_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"016"' & cleaned_dupes$week==1), ])
+P016_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"016"' & cleaned_dupes$week==2), ])
+P017_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"017"' & cleaned_dupes$week==1), ])
+P017_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"017"' & cleaned_dupes$week==2), ])
+P018_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"018"' & cleaned_dupes$week==1), ])
+P018_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"018"' & cleaned_dupes$week==2), ])
+P019_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"019"' & cleaned_dupes$week==1), ])
+P019_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"019"' & cleaned_dupes$week==2), ])
+P020_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"020"' & cleaned_dupes$week==1), ])
+P020_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"020"' & cleaned_dupes$week==2), ])
+P023_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"023"' & cleaned_dupes$week==1), ])
+P023_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"023"' & cleaned_dupes$week==2), ])
+P024_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"024"' & cleaned_dupes$week==1), ])
+P024_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"024"' & cleaned_dupes$week==2), ])
+P025_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"025"' & cleaned_dupes$week==1), ])
+P025_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"025"' & cleaned_dupes$week==2), ])
+P027_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"027"' & cleaned_dupes$week==1), ])
+P027_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"027"' & cleaned_dupes$week==2), ])
+P029_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"029"' & cleaned_dupes$week==1), ])
+P029_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"029"' & cleaned_dupes$week==2), ])
+P031_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"031"' & cleaned_dupes$week==1), ])
+P031_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"031"' & cleaned_dupes$week==2), ])
+P033_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"033"' & cleaned_dupes$week==1), ])
+P033_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"033"' & cleaned_dupes$week==2), ])
+P034_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"034"' & cleaned_dupes$week==1), ])
+P034_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"034"' & cleaned_dupes$week==2), ])
+P035_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"035"	' & cleaned_dupes$week==1), ])
+P035_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"035"	' & cleaned_dupes$week==2), ])
+P036_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"036"' & cleaned_dupes$week==1), ])
+P036_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"036"' & cleaned_dupes$week==2), ])
+P037_tot_w1 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"037"' & cleaned_dupes$week==1), ])
+P037_tot_w2 = nrow(cleaned_dupes[which(cleaned_dupes$pid=='"037"' & cleaned_dupes$week==2), ])
+
+immunology_plus_dataset$tot_words_t1 <- rbind(P001_tot_w1,P003_tot_w1, P006_tot_w1, P009_tot_w1, P011_tot_w1, P012_tot_w1, P013_tot_w1, P014_tot_w1, P015_tot_w1, P016_tot_w1, P017_tot_w1, P018_tot_w1, P019_tot_w1, P020_tot_w1, P023_tot_w1, P024_tot_w1, P025_tot_w1, P027_tot_w1, P029_tot_w1, P031_tot_w1, P033_tot_w1, P034_tot_w1, P035_tot_w1, P036_tot_w1, P037_tot_w1)
+
+immunology_plus_dataset$tot_words_t2 <- rbind(P001_tot_w2,P003_tot_w2, P006_tot_w2, P009_tot_w2, P011_tot_w2, P012_tot_w2, P013_tot_w2, P014_tot_w2, P015_tot_w2, P016_tot_w2, P017_tot_w2, P018_tot_w2, P019_tot_w2, P020_tot_w2, P023_tot_w2, P024_tot_w2, P025_tot_w2, P027_tot_w2, P029_tot_w2, P031_tot_w2, P033_tot_w2, P034_tot_w2, P035_tot_w2, P036_tot_w2, P037_tot_w2)
+
+# Now get affective words (Kate did):
 get_sentiments("bing")
 
 get_sentiments("afinn")
