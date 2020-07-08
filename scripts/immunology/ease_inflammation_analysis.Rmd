@@ -103,6 +103,11 @@ names(all_4corr)[names(all_4corr) == "strain_ct_acute_tot"] <- "STRAIN acute str
 names(all_4corr)[names(all_4corr) == "strain_ct_chronic_tot"] <- "STRAIN chronic stressors"
 
 ease_corr <- rcorr(as.matrix(all_4corr))
+library(ggcorrplot)
+library(viridis)
+ggcorrplot(ease_corr$r, hc.order = TRUE, type = "lower",
+   lab = TRUE, colors = c("yellow", "white", "purple"))
+
 ease_cor_plot <- corrplot(ease_corr$r, method = "number", type = "upper", order = "original", tl.col = "black", tl.srt = 45, tl.cex = .7, number.cex = .7, diag = FALSE)
 ease_corr$r
 ease_corr$P
