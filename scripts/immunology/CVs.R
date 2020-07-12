@@ -9,7 +9,7 @@ crp_cv <- (crp_pl1_cv + crp_pl2_cv)/2
 
 il1b_pl1_cv <- mean(intraassays$il1b_pl1, na.rm = TRUE)
 il1b_pl2_cv <- mean(intraassays$il1b_pl2, na.rm = TRUE)
-il10_cv <- (il1b_pl1_cv + il1b_pl2_cv)/2
+il1b_cv <- (il1b_pl1_cv + il1b_pl2_cv)/2
 
 iga_pl1_cv <- mean(intraassays$iga_pl1, na.rm = TRUE)
 iga_pl2_cv <- mean(intraassays$iga_pl2, na.rm = TRUE)
