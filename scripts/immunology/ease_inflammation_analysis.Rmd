@@ -105,9 +105,6 @@ ease_summary$dassstr_sd <- sd(immunology_plus_dataset$dass_str_avg, na.rm = TRUE
 ease_summary$pss_mean <- mean(immunology_plus_dataset$pss_avg, na.rm = TRUE)
 ease_summary$pss_sd <- sd(immunology_plus_dataset$pss_avg, na.rm = TRUE)
 
-ease_summary$ssic_mean <- mean(immunology_plus_dataset$ssic_avg, na.rm = TRUE)
-ease_summary$ssic_sd <- sd(immunology_plus_dataset$ssic_avg, na.rm = TRUE)
-
 ease_summary$sleep_mean <- mean(immunology_plus_dataset$tot_hr_sleep, na.rm = TRUE)
 ease_summary$sleep_sd <- sd(immunology_plus_dataset$tot_hr_sleep, na.rm = TRUE)
 
@@ -127,10 +124,10 @@ ease_summary$strainchr_sd <- sd(immunology_plus_dataset$strain_ct_chronic_tot, n
 library(corrplot)
 library(Hmisc)
 library(tidyverse)
-all_4corr <- select(immunology_plus_dataset, "il1b_w_avg","crp_w_avg","afinn_avg","bing_pos_ratio","bing_tot_neg", "bing_tot_pos","bing_tot_aff","tot_words_avg","dass_anx_avg","dass_dep_avg","dass_str_avg","pss_avg","ssic_avg","tot_hr_sleep","strain_ct_stress_tot","strain_ct_acute_tot","strain_ct_chronic_tot")
+all_4corr <- select(immunology_plus_dataset,"tot_words_avg","bing_pos_ratio","bing_tot_aff","bing_tot_pos","bing_tot_neg","afinn_avg","tot_hr_sleep","il1b_w_avg","crp_w_avg","strain_ct_chronic_tot","strain_ct_acute_tot","strain_ct_stress_tot","dass_str_avg","dass_dep_avg","dass_anx_avg","pss_avg")
 
-names(all_4corr)[names(all_4corr) == "il1b_w_avg"] <- "IL-1 Beta"
-names(all_4corr)[names(all_4corr) == "crp_w_avg"] <- "CRP"
+names(all_4corr)[names(all_4corr) == "il1b_w_avg"] <- "sIL-1 Beta"
+names(all_4corr)[names(all_4corr) == "crp_w_avg"] <- "sCRP"
 names(all_4corr)[names(all_4corr) == "afinn_avg"] <- "AFINN score"
 names(all_4corr)[names(all_4corr) == "bing_pos_ratio"] <- "Bing positive to total ratio"
 names(all_4corr)[names(all_4corr) == "bing_tot_neg"] <- "Bing negative"
@@ -141,7 +138,6 @@ names(all_4corr)[names(all_4corr) == "dass_anx_avg"] <- "DASS anxiety"
 names(all_4corr)[names(all_4corr) == "dass_dep_avg"] <- "DASS depression"
 names(all_4corr)[names(all_4corr) == "dass_str_avg"] <- "DASS stress"
 names(all_4corr)[names(all_4corr) == "pss_avg"] <- "PSS"
-names(all_4corr)[names(all_4corr) == "ssic_avg"] <- "SSiC"
 names(all_4corr)[names(all_4corr) == "tot_hr_sleep"] <- "Total hours sleep"
 names(all_4corr)[names(all_4corr) == "strain_ct_stress_tot"] <- "STRAIN count stressors"
 names(all_4corr)[names(all_4corr) == "strain_ct_acute_tot"] <- "STRAIN acute stressors"
@@ -149,7 +145,7 @@ names(all_4corr)[names(all_4corr) == "strain_ct_chronic_tot"] <- "STRAIN chronic
 
 ease_corr <- rcorr(as.matrix(all_4corr))
 library(ggcorrplot)
-ggcorrplot(ease_corr$r, hc.order = TRUE, type = "lower",
+ggcorrplot(ease_corr$r, hc.order = FALSE, type = "upper",
    lab = TRUE, colors = c("yellow", "white", "purple"))
 
 ease_cor_plot <- corrplot(ease_corr$r, method = "number", type = "upper", order = "original", tl.col = "black", tl.srt = 45, tl.cex = .7, number.cex = .7, diag = FALSE)
