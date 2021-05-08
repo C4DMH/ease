@@ -22,11 +22,12 @@ library(readxl)
 immunology_plus_dataset <- read_excel("C:/Users/michelle/Google Drive/Professional/Post Thesis/First author/EASE_Inflammation/immunology_plus_dataset.xlsx", 
     sheet = "all_data_avg")
 # not using covariates so get rid of these for now
-immunology_plus_dataset <- select(immunology_plus_dataset, "siga_w_avg",	"il1b_w_avg",	"crp_w_avg",	"afinn_avg",	"bing_pos_ratio",	"bing_tot_neg",	"bing_tot_pos",	"bing_tot_aff",	"tot_words_avg",	"dass_anx_avg",	"dass_dep_avg",	"dass_str_avg",	"pss_avg",	"ssic_avg",	"tot_hr_sleep",	"strain_ct_stress_tot",	"strain_ct_stress_sev",	"strain_ct_acute_tot",	"strain_ct_chronic_tot",	"siga_w_t1",	"il1b_w_t1",	"crp_w_t1",	"dass_anx_t1",	"dass_dep_t1",	"dass_str_t1",	"pss_tot_t1",	"ssic_mean_t1",	"psqi_tot_hr_t1",	"afinn_score_t1",	"bing_pos_ratio_t1",	"bing_tot_neg_t1",	"bing_tot_pos_t1",	"bing_tot_aff_t1",	"tot_words_t1",	"siga_w_t2",	"il1b_w_t2",	"crp_w_t2",	"dass_anx_t2",	"dass_dep_t2",	"dass_str_t2",	"pss_tot_t2",	"ssic_mean_t2",	"psqi_tot_hr_t2",	"afinn_score_t2",	"bing_pos_ratio_t2",	"bing_tot_neg_t2",	"bing_tot_pos_t2",	"bing_tot_aff_t2",	"tot_words_t2")
+immunology_plus_dataset <- select(immunology_plus_dataset, "siga_w_avg",	"il1b_w_avg",	"crp_w_avg",	"afinn_avg", "bing_aff_ratio",	"bing_pos_ratio",	"bing_tot_neg",	"bing_tot_pos",	"bing_tot_aff",	"tot_words_avg",	"dass_anx_avg",	"dass_dep_avg",	"dass_str_avg",	"pss_avg",	"ssic_avg",	"tot_hr_sleep",	"strain_ct_stress_tot",	"strain_ct_stress_sev",	"strain_ct_acute_tot",	"strain_ct_chronic_tot",	"siga_w_t1",	"il1b_w_t1",	"crp_w_t1",	"dass_anx_t1",	"dass_dep_t1",	"dass_str_t1",	"pss_tot_t1",	"ssic_mean_t1",	"psqi_tot_hr_t1",	"afinn_score_t1",	"bing_pos_ratio_t1",	"bing_tot_neg_t1",	"bing_tot_pos_t1",	"bing_tot_aff_t1",	"tot_words_t1",	"siga_w_t2",	"il1b_w_t2",	"crp_w_t2",	"dass_anx_t2",	"dass_dep_t2",	"dass_str_t2",	"pss_tot_t2",	"ssic_mean_t2",	"psqi_tot_hr_t2",	"afinn_score_t2",	"bing_pos_ratio_t2",	"bing_tot_neg_t2",	"bing_tot_pos_t2",	"bing_tot_aff_t2",	"tot_words_t2")
 
 attach(immunology_plus_dataset)
 
 immunology_plus_dataset$afinn_avg <- as.numeric(afinn_avg)
+immunology_plus_dataset$bing_aff_ratio <- as.numeric(bing_aff_ratio)
 immunology_plus_dataset$bing_pos_ratio <- as.numeric(bing_pos_ratio)
 immunology_plus_dataset$bing_tot_neg  <- as.numeric(bing_tot_neg )
 immunology_plus_dataset$bing_tot_pos <- as.numeric(bing_tot_pos)
@@ -78,6 +79,9 @@ ease_summary$crp_sd <- sd(immunology_plus_dataset$crp_w_avg, na.rm = TRUE)
 ease_summary$afinn_mean <- mean(immunology_plus_dataset$afinn_avg, na.rm = TRUE)
 ease_summary$afinn_sd <- sd(immunology_plus_dataset$afinn_avg, na.rm = TRUE)
 
+ease_summary$bingaffratio_mean <- mean(immunology_plus_dataset$bing_aff_ratio, na.rm = TRUE)
+ease_summary$bingaffratio_sd <- sd(immunology_plus_dataset$bing_aff_ratio, na.rm = TRUE)
+
 ease_summary$bingposratio_mean <- mean(immunology_plus_dataset$bing_pos_ratio, na.rm = TRUE)
 ease_summary$bingposratio_sd <- sd(immunology_plus_dataset$bing_pos_ratio, na.rm = TRUE)
 
@@ -124,24 +128,25 @@ ease_summary$strainchr_sd <- sd(immunology_plus_dataset$strain_ct_chronic_tot, n
 library(corrplot)
 library(Hmisc)
 library(tidyverse)
-all_4corr <- select(immunology_plus_dataset,"tot_words_avg","bing_pos_ratio","bing_tot_aff","bing_tot_pos","bing_tot_neg","afinn_avg","tot_hr_sleep","il1b_w_avg","crp_w_avg","strain_ct_chronic_tot","strain_ct_acute_tot","strain_ct_stress_tot","dass_str_avg","dass_dep_avg","dass_anx_avg","pss_avg")
+all_4corr <- select(immunology_plus_dataset,"tot_words_avg","bing_aff_ratio","bing_pos_ratio","bing_tot_aff","bing_tot_pos","bing_tot_neg","afinn_avg","il1b_w_avg","crp_w_avg","tot_hr_sleep","dass_str_avg","dass_dep_avg","dass_anx_avg","strain_ct_chronic_tot","strain_ct_acute_tot","strain_ct_stress_tot","pss_avg")
 
-names(all_4corr)[names(all_4corr) == "il1b_w_avg"] <- "sIL-1 Beta"
-names(all_4corr)[names(all_4corr) == "crp_w_avg"] <- "sCRP"
-names(all_4corr)[names(all_4corr) == "afinn_avg"] <- "AFINN score"
-names(all_4corr)[names(all_4corr) == "bing_pos_ratio"] <- "Bing positive to total ratio"
-names(all_4corr)[names(all_4corr) == "bing_tot_neg"] <- "Bing negative"
-names(all_4corr)[names(all_4corr) == "bing_tot_pos"] <- "Bing positive"
-names(all_4corr)[names(all_4corr) == "bing_tot_aff"] <- "Bing affective"
+names(all_4corr)[names(all_4corr) == "il1b_w_avg"] <- "ln(sIL-1 Beta)"
+names(all_4corr)[names(all_4corr) == "crp_w_avg"] <- "Raw sCRP"
+names(all_4corr)[names(all_4corr) == "afinn_avg"] <- "AFINN total score"
+names(all_4corr)[names(all_4corr) == "bing_aff_ratio"] <- "Bing affective to total words ratio"
+names(all_4corr)[names(all_4corr) == "bing_pos_ratio"] <- "Bing positive to total affective ratio"
+names(all_4corr)[names(all_4corr) == "bing_tot_neg"] <- "Bing total negative words"
+names(all_4corr)[names(all_4corr) == "bing_tot_pos"] <- "Bing total positive words"
+names(all_4corr)[names(all_4corr) == "bing_tot_aff"] <- "Bing total affective words"
 names(all_4corr)[names(all_4corr) == "tot_words_avg"] <- "Total words typed"
 names(all_4corr)[names(all_4corr) == "dass_anx_avg"] <- "DASS anxiety"
 names(all_4corr)[names(all_4corr) == "dass_dep_avg"] <- "DASS depression"
 names(all_4corr)[names(all_4corr) == "dass_str_avg"] <- "DASS stress"
-names(all_4corr)[names(all_4corr) == "pss_avg"] <- "PSS"
-names(all_4corr)[names(all_4corr) == "tot_hr_sleep"] <- "Total hours sleep"
-names(all_4corr)[names(all_4corr) == "strain_ct_stress_tot"] <- "STRAIN count stressors"
-names(all_4corr)[names(all_4corr) == "strain_ct_acute_tot"] <- "STRAIN acute stressors"
-names(all_4corr)[names(all_4corr) == "strain_ct_chronic_tot"] <- "STRAIN chronic stressors"
+names(all_4corr)[names(all_4corr) == "pss_avg"] <- "PSS total score"
+names(all_4corr)[names(all_4corr) == "tot_hr_sleep"] <- "PSQI average hours sleep per night"
+names(all_4corr)[names(all_4corr) == "strain_ct_stress_tot"] <- "STRAIN count: all stressors"
+names(all_4corr)[names(all_4corr) == "strain_ct_acute_tot"] <- "STRAIN count: acute stressors"
+names(all_4corr)[names(all_4corr) == "strain_ct_chronic_tot"] <- "STRAIN count: chronic stressors"
 
 ease_corr <- rcorr(as.matrix(all_4corr))
 library(ggcorrplot)
